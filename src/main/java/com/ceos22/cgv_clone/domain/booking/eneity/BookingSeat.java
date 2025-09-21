@@ -1,4 +1,4 @@
-package com.ceos22.cgv_clone.domain.booking;
+package com.ceos22.cgv_clone.domain.booking.eneity;
 
 import com.ceos22.cgv_clone.domain.screening.Screening;
 import com.ceos22.cgv_clone.domain.theater.entity.Seat;

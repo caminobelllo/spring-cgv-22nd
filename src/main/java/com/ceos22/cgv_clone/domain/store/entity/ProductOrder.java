@@ -1,4 +1,4 @@
-package com.ceos22.cgv_clone.domain.store;
+package com.ceos22.cgv_clone.domain.store.entity;
 
 import com.ceos22.cgv_clone.domain.member.entity.Member;
 import com.ceos22.cgv_clone.domain.theater.entity.Cinema;

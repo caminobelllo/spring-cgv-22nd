@@ -5,6 +5,7 @@ import lombok.*;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
     @Id
@@ -21,4 +22,13 @@ public class Member {
     // 가입 시 이메일 @앞부분으로 자동 설정
     @Column(nullable = false, length = 20)
     private String nickname;
+
+    public static Member create(String email, String password, String nickname) {
+        Member member = new Member();
+        member.email = email;
+        member.password = password;
+        member.nickname = nickname;
+
+        return member;
+    }
 }

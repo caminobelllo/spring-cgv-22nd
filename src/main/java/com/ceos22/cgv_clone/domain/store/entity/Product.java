@@ -1,4 +1,4 @@
-package com.ceos22.cgv_clone.domain.store;
+package com.ceos22.cgv_clone.domain.store.entity;
 
 import com.ceos22.cgv_clone.domain.common.enums.ProductCategory;
 import jakarta.persistence.*;
