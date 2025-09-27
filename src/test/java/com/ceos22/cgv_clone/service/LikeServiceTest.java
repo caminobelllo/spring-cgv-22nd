@@ -64,14 +64,18 @@ class LikeServiceTest {
         @DisplayName("성공 - 좋아요 취소")
         void toggleMovieLike_Delete() {
             // given
+            String memberEmail = "test@example.com";
             long memberId = 1L;
             long movieId = 10L;
+            Member member = Member.create("test@example.com", "password123", "testuser");
+            ReflectionTestUtils.setField(member, "id", memberId);
             MovieLike existingLike = new MovieLike();
 
+            given(memberRepository.findByEmail(memberEmail)).willReturn(Optional.of(member));
             given(movieLikeRepository.findByMemberIdAndMovieId(memberId, movieId)).willReturn(Optional.of(existingLike));
 
             // when
-            LikeToggleResponseDto result = likeService.toggleMovieLike(memberId, movieId);
+            LikeToggleResponseDto result = likeService.toggleMovieLike(memberEmail, movieId);
 
             // then
             verify(movieLikeRepository, times(1)).delete(existingLike);
