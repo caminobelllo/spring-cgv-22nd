@@ -24,13 +24,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.ceos22.cgv_clone.domain.common.enums.TicketPrice.ADULT_PRICE;
+import static com.ceos22.cgv_clone.domain.common.enums.TicketPrice.TEEN_PRICE;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BookingService {
-
-    private static final int ADULT_PRICE = 15000;
-    private static final int TEEN_PRICE  = 11000;
 
     private final BookingRepository bookingRepository;
     private final BookingSeatRepository bookingSeatRepository;
@@ -38,9 +38,18 @@ public class BookingService {
     private final ScreeningRepository screeningRepository;
     private final SeatRepository seatRepository;
 
+    /** 가격 계산 */
+    public int calculateTotalPrice(int adultCount, int teenCount) {
+        int adultPrice = adultCount * ADULT_PRICE.getPrice();
+        int teenPrice = teenCount * TEEN_PRICE.getPrice();
+
+        return adultPrice + teenPrice;
+    }
+
     /** 예매 생성 */
     @Transactional
     public BookingResponseDto create(BookingRequestDto req) {
+
         // 1) 기본 로딩
         Member member = memberRepository.findById(req.getMemberId())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
@@ -69,14 +78,14 @@ public class BookingService {
         if (mismatch) throw new IllegalArgumentException("seat not in screening auditorium");
 
         // 4) 가격 계산
-        int totalPrice = req.getAdultCount() * ADULT_PRICE + req.getTeenCount() * TEEN_PRICE;
+        int totalPrice = calculateTotalPrice(req.getAdultCount(), req.getTeenCount());
 
         // 5) Booking 저장
         Booking booking = Booking.create(member, screening, req.getPaymentType(),
                 req.getAdultCount(), req.getTeenCount(), totalPrice);
         bookingRepository.save(booking);
 
-        // 6) BookingSeat 저장 (UNIQUE(screening, seat) 로 더블북킹 방지)
+        // 6) BookingSeat 저장 (UNIQUE(screening, seat) 로 중복 예매 방지)
         List<BookingSeat> lines = new ArrayList<>();
         for (Seat seat : seats) {
             lines.add(BookingSeat.of(booking, screening, seat));
