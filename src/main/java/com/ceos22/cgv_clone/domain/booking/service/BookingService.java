@@ -68,7 +68,8 @@ public class BookingService {
             throw new IllegalArgumentException("paymentType required");
 
         // 3) 좌석 로딩 + 회차-관 일치 검증
-        List<Seat> seats = seatRepository.findAllById(req.getSeatIds());
+        // findAllByIdWithLock으로 적용
+        List<Seat> seats = seatRepository.findAllByIdWithLock(req.getSeatIds());
         if (seats.size() != req.getSeatIds().size())
             throw new IllegalArgumentException("some seats not found");
 
@@ -87,14 +88,16 @@ public class BookingService {
 
         // 6) BookingSeat 저장 (UNIQUE(screening, seat) 로 중복 예매 방지)
         List<BookingSeat> lines = new ArrayList<>();
+
         for (Seat seat : seats) {
             lines.add(BookingSeat.of(booking, screening, seat));
         }
+
+        // try-catch로 다시 검증
         try {
             bookingSeatRepository.saveAll(lines);
         } catch (DataIntegrityViolationException e) {
-            // 동시성 충돌(이미 누가 먼저 같은 좌석 예매)
-            throw new IllegalStateException("Some seats already booked", e);
+            throw new IllegalStateException("좌석을 예매할 수 없습니다.", e);
         }
 
         // 7) 응답
@@ -140,7 +143,7 @@ public class BookingService {
         Booking b = bookingRepository.findDetailById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
 
-        List<BookingSeat> lines = bookingSeatRepository.findByBooking(b);
+        List<BookingSeat> lines = bookingSeatRepository.findByBookingWithSeat(b);
 
         return BookingDetailResponseDto.builder()
                 .bookingId(b.getId())
