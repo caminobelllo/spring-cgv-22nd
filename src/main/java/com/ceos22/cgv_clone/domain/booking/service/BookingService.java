@@ -126,4 +126,31 @@ public class BookingService {
                 .build();
     }
 
+    /** 예매 상세 조회 */
+    public BookingDetailResponseDto getDetail(Long bookingId) {
+        Booking b = bookingRepository.findDetailById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+
+        List<BookingSeat> lines = bookingSeatRepository.findByBooking(b);
+
+        return BookingDetailResponseDto.builder()
+                .bookingId(b.getId())
+                .memberId(b.getMember().getId())
+                .paymentType(b.getPaymentType())
+                .status(b.getStatus())
+                .bookingAt(b.getBookingAt())
+                .adultCount(b.getAdultCount())
+                .teenCount(b.getTeenCount())
+                .totalPeople(b.getTotalPeople())
+                .totalPrice(b.getTotalPrice())
+                .screeningId(b.getScreening().getId())
+                .movieTitle(b.getScreening().getMovie().getTitle())
+                .auditoriumName(b.getScreening().getAuditorium().getName())
+                .startedAt(b.getScreening().getStartedAt())
+                .endedAt(b.getScreening().getEndedAt())
+                .seats(lines.stream()
+                        .map(ls -> ls.getSeat().getRowNo() + "-" + ls.getSeat().getColumnNo())
+                        .toList())
+                .build();
+    }
 }
