@@ -41,7 +41,7 @@ public class BookingService {
     private final SeatRepository seatRepository;
 
     /** 가격 계산 */
-    public int calculateTotalPrice(int adultCount, int teenCount) {
+    private int calculateTotalPrice(int adultCount, int teenCount) {
         int adultPrice = adultCount * ADULT_PRICE.getPrice();
         int teenPrice = teenCount * TEEN_PRICE.getPrice();
 
