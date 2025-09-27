@@ -15,6 +15,8 @@ import com.ceos22.cgv_clone.domain.screening.entity.Screening;
 import com.ceos22.cgv_clone.domain.screening.repository.ScreeningRepository;
 import com.ceos22.cgv_clone.domain.theater.entity.Seat;
 import com.ceos22.cgv_clone.domain.theater.repository.SeatRepository;
+import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
+import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -50,43 +52,42 @@ public class BookingService {
     @Transactional
     public BookingResponseDto create(BookingRequestDto req) {
 
-        // 1) 기본 로딩
         Member member = memberRepository.findById(req.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Screening screening = screeningRepository.findById(req.getScreeningId())
-                .orElseThrow(() -> new IllegalArgumentException("Screening not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
 
-        // 2) 입력 검증
+        // 입력 검증
         if (req.getSeatIds() == null || req.getSeatIds().isEmpty())
             throw new IllegalArgumentException("seatIds required");
 
         int expectedPeople = req.getAdultCount() + req.getTeenCount();
         if (expectedPeople != req.getSeatIds().size())
-            throw new IllegalArgumentException("people count must match seat count");
+            throw new CustomException(ErrorCode.BOOKING_COUNT_VALIDATION_FAILED);
 
         if (req.getPaymentType() == null)
-            throw new IllegalArgumentException("paymentType required");
+            throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
 
-        // 3) 좌석 로딩 + 회차-관 일치 검증
-        // findAllByIdWithLock으로 적용
+        // 좌석 로딩 + 회차-관 일치 검증
+        // findAllByIdWithLock 적용
         List<Seat> seats = seatRepository.findAllByIdWithLock(req.getSeatIds());
         if (seats.size() != req.getSeatIds().size())
-            throw new IllegalArgumentException("some seats not found");
+            throw new CustomException(ErrorCode.SEAT_NOT_FOUND);
 
         Long screeningAuditoriumId = screening.getAuditorium().getId();
         boolean mismatch = seats.stream().anyMatch(s -> !Objects.equals(
                 s.getAuditorium().getId(), screeningAuditoriumId));
-        if (mismatch) throw new IllegalArgumentException("seat not in screening auditorium");
+        if (mismatch) throw new CustomException(ErrorCode.SEAT_IN_AUDITORIUM_NOT_FOUND);
 
-        // 4) 가격 계산
+        // 가격 계산
         int totalPrice = calculateTotalPrice(req.getAdultCount(), req.getTeenCount());
 
-        // 5) Booking 저장
+        // Booking 저장
         Booking booking = Booking.create(member, screening, req.getPaymentType(),
                 req.getAdultCount(), req.getTeenCount(), totalPrice);
         bookingRepository.save(booking);
 
-        // 6) BookingSeat 저장 (UNIQUE(screening, seat) 로 중복 예매 방지)
+        // BookingSeat 저장
         List<BookingSeat> lines = new ArrayList<>();
 
         for (Seat seat : seats) {
@@ -100,9 +101,9 @@ public class BookingService {
             throw new IllegalStateException("좌석을 예매할 수 없습니다.", e);
         }
 
-        // 7) 응답
+        // 응답
         List<String> seatLabels = seats.stream()
-                .map(s -> s.getRowNo() + "-" + s.getColumnNo()) // 필요시 포맷 바꿔
+                .map(s -> s.getRowNo() + "-" + s.getColumnNo())
                 .toList();
 
         return BookingResponseDto.builder()
@@ -123,7 +124,7 @@ public class BookingService {
     @Transactional
     public BookingCancelResponseDto cancel(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.BOOKING_NOT_FOUND));
 
         // 좌석 라인 삭제
         bookingSeatRepository.deleteByBooking(booking);
@@ -141,7 +142,7 @@ public class BookingService {
     /** 예매 상세 조회 */
     public BookingDetailResponseDto getDetail(Long bookingId) {
         Booking b = bookingRepository.findDetailById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.BOOKING_NOT_FOUND));
 
         List<BookingSeat> lines = bookingSeatRepository.findByBookingWithSeat(b);
 

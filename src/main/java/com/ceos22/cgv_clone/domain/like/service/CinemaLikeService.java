@@ -8,6 +8,8 @@ import com.ceos22.cgv_clone.domain.member.entity.Member;
 import com.ceos22.cgv_clone.domain.member.repository.MemberRepository;
 import com.ceos22.cgv_clone.domain.theater.entity.Cinema;
 import com.ceos22.cgv_clone.domain.theater.repository.CinemaRepository;
+import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
+import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -26,10 +28,10 @@ public class CinemaLikeService {
     public void likeCinema(CinemaLikeRequestDto requestDto) {
 
         Cinema cinema = cinemaRepository.findById(requestDto.getCinemaId())
-                .orElseThrow(() -> new IllegalArgumentException("Cinema not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.CINEMA_NOT_FOUND));
 
         Member member = memberRepository.findById(requestDto.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+                .orElseThrow(() ->  new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (cinemaLikeRepository.existsByMemberIdAndCinemaId(member.getId(), cinema.getId())) return;
 

@@ -3,6 +3,8 @@ package com.ceos22.cgv_clone.domain.screening.service;
 import com.ceos22.cgv_clone.domain.screening.dto.ScreeningDto;
 import com.ceos22.cgv_clone.domain.screening.entity.Screening;
 import com.ceos22.cgv_clone.domain.screening.repository.ScreeningRepository;
+import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
+import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +26,7 @@ public class ScreeningQueryService {
     ) {
 
         if (cinemaId == null && auditoriumId == null) {
-            throw new InvalidParameterException("cinemaId 또는 auditoriumId 중 하나는 필수입니다.");
+            throw new CustomException(ErrorCode.VALIDATION_FAILED);
         }
 
         LocalDateTime start = date.atStartOfDay();

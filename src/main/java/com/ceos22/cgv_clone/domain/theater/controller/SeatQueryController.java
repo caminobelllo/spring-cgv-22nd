@@ -1,6 +1,8 @@
 package com.ceos22.cgv_clone.domain.theater.controller;
 import com.ceos22.cgv_clone.domain.theater.dto.SeatStatusDto;
 import com.ceos22.cgv_clone.domain.theater.service.SeatQueryService;
+import com.ceos22.cgv_clone.global.apiPayload.CustomResponse;
+import com.ceos22.cgv_clone.global.apiPayload.code.success.SuccessCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +17,7 @@ public class SeatQueryController {
 
     // 좌석 현황
     @GetMapping("/screenings/{screeningId}/seats")
-    public List<SeatStatusDto> seatMap(@PathVariable Long screeningId) {
-        return service.getSeatMap(screeningId);
+    public CustomResponse<List<SeatStatusDto>> seatMap(@PathVariable Long screeningId) {
+        return CustomResponse.onSuccess(SuccessCode.OK, service.getSeatMap(screeningId));
     }
 }

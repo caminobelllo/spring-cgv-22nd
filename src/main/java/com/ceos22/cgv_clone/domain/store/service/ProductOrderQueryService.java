@@ -15,6 +15,8 @@ import com.ceos22.cgv_clone.domain.store.repository.ProductOrderRepository;
 import com.ceos22.cgv_clone.domain.store.repository.ProductRepository;
 import com.ceos22.cgv_clone.domain.theater.entity.Cinema;
 import com.ceos22.cgv_clone.domain.theater.repository.CinemaRepository;
+import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
+import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,14 +41,14 @@ public class ProductOrderQueryService {
     /** 주문 생성 + 응답 반환 */
     @Transactional
     public ProductOrderResponseDto createOrder(ProductOrderRequestDto req) {
-        // 1) 기본 로딩
+
         Member member = memberRepository.findById(req.getMemberId())
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Cinema cinema = cinemaRepository.findById(req.getCinemaId())
-                .orElseThrow(() -> new IllegalArgumentException("Cinema not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.CINEMA_NOT_FOUND));
 
         if (req.getItems() == null || req.getItems().isEmpty()) {
-            throw new IllegalArgumentException("items required");
+            throw new CustomException(ErrorCode.ITEM_VALIDATION_FAILED);
         }
 
         // 쿼리 한 번에 조회되도록
@@ -59,10 +61,10 @@ public class ProductOrderQueryService {
 
         // 요청된 상품 ID 중 DB에 없는 것이 있는지 확인
         if (productMap.size() != productIds.size()) {
-            throw new IllegalArgumentException("Some products not found");
+            throw new CustomException(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
-        // 2) 총액 계산 & 응답 아이템 준비
+        // 총액 계산 & 응답 아이템
         int totalPrice = 0;
         List<ProductOrderResponseDto.OrderItem> responseItems = new ArrayList<>();
 
@@ -73,16 +75,16 @@ public class ProductOrderQueryService {
             responseItems.add(ProductOrderResponseDto.OrderItem.builder()
                     .productName(product.getName())
                     .quantity(item.getQuantity())
-                    .price(product.getPrice()) // 단가 스냅샷
+                    .price(product.getPrice())
                     .build());
         }
 
 
-        // 3) 주문 헤더 생성/저장 (엔티티에 정적 팩토리 있어야 함)
+        // 주문 생성/저장
         ProductOrder order = ProductOrder.create(member, cinema, totalPrice);
         productOrderRepository.save(order);
 
-        // 4) 재고 차감 + 주문 라인 생성/저장
+        // 재고 차감 + 주문 라인 생성/저장
         List<ProductOrderItem> lines = new ArrayList<>();
         for (ProductOrderRequestDto.OrderItem item : req.getItems()) {
             Product product = productMap.get(item.getProductId());
@@ -90,8 +92,8 @@ public class ProductOrderQueryService {
             // 재고 차감
             int updatedRows = inventoryRepository.decrement(cinema.getId(), product.getId(), item.getQuantity());
             if (updatedRows != 1) {
-                // 재고 부족 시 트랜잭션이 롤백되므로 이미 차감된 다른 상품 재고도 원상 복구됩니다.
-                throw new IllegalStateException("Out of stock for product: " + product.getName());
+
+                throw new CustomException(ErrorCode.PRODUCT_STOCK_VALIDATION_FAILED);
             }
 
             lines.add(ProductOrderItem.of(order, product, item.getQuantity()));
@@ -99,7 +101,7 @@ public class ProductOrderQueryService {
         productOrderItemRepository.saveAll(lines);
 
 
-        // 5) 응답 DTO
+        // 응답 DTO
         return ProductOrderResponseDto.builder()
                 .orderId(order.getId())
                 .memberId(member.getId())
@@ -123,7 +125,7 @@ public class ProductOrderQueryService {
 
     public ProductOrderDetailDto getOrder(Long orderId) {
         ProductOrder order = productOrderRepository.findDetailsById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));
 
         List<ProductOrderItem> items = productOrderItemRepository.findByProductOrderId(orderId);
 

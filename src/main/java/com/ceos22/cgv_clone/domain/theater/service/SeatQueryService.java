@@ -5,6 +5,8 @@ import com.ceos22.cgv_clone.domain.screening.repository.ScreeningRepository;
 import com.ceos22.cgv_clone.domain.theater.dto.SeatStatusDto;
 import com.ceos22.cgv_clone.domain.theater.entity.Seat;
 import com.ceos22.cgv_clone.domain.theater.repository.SeatRepository;
+import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
+import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +26,7 @@ public class SeatQueryService {
 
     public List<SeatStatusDto> getSeatMap(Long screeningId) {
         Screening screening = screeningRepository.findById(screeningId)
-                .orElseThrow(() -> new IllegalArgumentException("Screening not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
 
         Long auditoriumId = screening.getAuditorium().getId();
         List<Seat> seats = seatRepository.findAllByAuditoriumIdSorted(auditoriumId);
