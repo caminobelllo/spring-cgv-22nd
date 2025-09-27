@@ -55,13 +55,18 @@ CEOS 22기 백엔드 스터디 - CGV 클론 코딩 프로젝트
 - 스프링 시큐리티는 클라이언트의 요청이 여러개의 필터를 거쳐 DispatcherServlet(Controller)으로 향하는 중간 필터에서 요청을 가로챈 후 검증(인증/인가)을 진행한다.
 
 ### 클라이언트 요청 → 서블릿 필터 → 서블릿 (컨트롤러)
-(이미지)
+<img width="691" height="327" alt="스크린샷 2025-09-27 오후 10 32 57" src="https://github.com/user-attachments/assets/959a6a46-6d5a-493f-8f44-6ce0f2f9c35a" />
+
 
 ### Delegating Filter Proxy
 - 서블릿 컨테이너 (톰캣)에 존재하는 필터 체인에 DelegatingFilter를 등록한 뒤 모든 요청을 가로챈다.
+<img width="580" height="820" alt="image" src="https://github.com/user-attachments/assets/d55a5d93-00c3-4358-b053-b54cbb5cb0f3" />
+
 
 - 서블릿 필터 체인의 DelegatingFilter → Security 필터 체인 (내부 처리 후) → 서블릿 필터 체인의 DelegatingFilter 
 - 가로챈 요청은 SecurityFilterChain에서 처리 후 상황에 따른 거부, 리디렉션, 서블릿으로 요청 전달을 진행한다.
+<img width="1250" height="777" alt="image" src="https://github.com/user-attachments/assets/c2ff7bc2-d93d-43d4-826b-a145c8aab07a" />
+
 
 ## JWT 생성 원리
 JWT는 서버와 클라이언트 간에 정보를 안전하게 주고받을 수 있는 토큰 기반 인증 시스템. 이 토큰은 사용자 인증 정보와 기타 클레임(claim)을 포함하고 있으며, 서명되어 있어 위조가 불가능하다.
