@@ -11,6 +11,8 @@ import com.ceos22.cgv_clone.domain.movie.entity.Movie;
 import com.ceos22.cgv_clone.domain.movie.repository.MovieRepository;
 import com.ceos22.cgv_clone.domain.theater.entity.Cinema;
 import com.ceos22.cgv_clone.domain.theater.repository.CinemaRepository;
+import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
+import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +32,12 @@ public class LikeService {
 
     // 영화 찜
     @Transactional
-    public LikeToggleResponseDto toggleMovieLike(Long memberId, Long movieId) {
+    public LikeToggleResponseDto toggleMovieLike(String email, Long movieId) {
 
-        Optional<MovieLike> movieLikeOptional = movieLikeRepository.findByMemberIdAndMovieId(memberId, movieId);
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Optional<MovieLike> movieLikeOptional = movieLikeRepository.findByMemberIdAndMovieId(member.getId(), movieId);
 
         boolean isLiked;
 
@@ -42,8 +47,8 @@ public class LikeService {
             isLiked = false;
         }
         else {
-            Member member = memberRepository.findById(memberId).orElseThrow(/* MemberNotFoundException */);
-            Movie movie = movieRepository.findById(movieId).orElseThrow(/* MovieNotFoundException */);
+            Movie movie = movieRepository.findById(movieId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.MOVIE_NOT_FOUND));
             movieLikeRepository.save(MovieLike.create(member, movie));
             isLiked = true;
         }
@@ -54,8 +59,13 @@ public class LikeService {
 
     // 영화관 찜
     @Transactional
-    public LikeToggleResponseDto toggleCinemaLike(Long memberId, Long cinemaId) {
-        Optional<CinemaLike> cinemaLikeOptional = cinemaLikeRepository.findByMemberIdAndCinemaId(memberId, cinemaId);
+    public LikeToggleResponseDto toggleCinemaLike(String email, Long cinemaId) {
+
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+
+        Optional<CinemaLike> cinemaLikeOptional = cinemaLikeRepository.findByMemberIdAndCinemaId(member.getId(), cinemaId);
 
         boolean isLiked;
 
@@ -63,8 +73,8 @@ public class LikeService {
             cinemaLikeRepository.delete(cinemaLikeOptional.get());
             isLiked = false;
         } else {
-            Member member = memberRepository.findById(memberId).orElseThrow(/* MemberNotFoundException */);
-            Cinema cinema = cinemaRepository.findById(cinemaId).orElseThrow(/* CinemaNotFoundException */);
+            Cinema cinema = cinemaRepository.findById(cinemaId)
+                    .orElseThrow(() -> new IllegalArgumentException("Cinema not found"));
             cinemaLikeRepository.save(CinemaLike.create(member, cinema));
             isLiked = true;
         }

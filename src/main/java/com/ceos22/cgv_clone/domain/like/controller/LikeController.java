@@ -7,6 +7,8 @@ import com.ceos22.cgv_clone.global.apiPayload.code.success.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,9 +23,10 @@ public class LikeController {
     @PostMapping("/likes/movies/{movieId}/toggle")
     public CustomResponse<LikeToggleResponseDto> toggleMovieLike(
             @PathVariable Long movieId,
-            @RequestParam Long memberId ) { // TODO: @AuthenticationPrincipal
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        LikeToggleResponseDto response = likeService.toggleMovieLike(memberId, movieId);
+        String email = userDetails.getUsername();   // token에서 추출하는 방식으로 변경
+        LikeToggleResponseDto response = likeService.toggleMovieLike(email, movieId);
         return CustomResponse.onSuccess(SuccessCode.CREATED, response);
     }
 
@@ -31,9 +34,10 @@ public class LikeController {
     @PostMapping("/cinemas/{cinemaId}/toggle")
     public CustomResponse<LikeToggleResponseDto> toggleCinemaLike(
             @PathVariable Long cinemaId,
-            @RequestParam Long memberId) { // TODO: @AuthenticationPrincipal
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        LikeToggleResponseDto response = likeService.toggleCinemaLike(memberId, cinemaId);
+        String email = userDetails.getUsername();
+        LikeToggleResponseDto response = likeService.toggleCinemaLike(email, cinemaId);
         return CustomResponse.onSuccess(SuccessCode.CREATED, response);
     }
 }
