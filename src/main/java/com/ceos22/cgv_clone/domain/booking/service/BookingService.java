@@ -107,4 +107,23 @@ public class BookingService {
                 .build();
     }
 
+    /** 예매 취소 */
+    @Transactional
+    public BookingCancelResponseDto cancel(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+
+        // 좌석 라인 삭제
+        bookingSeatRepository.deleteByBooking(booking);
+
+        // 상태 변경
+        booking.cancel();
+
+        return BookingCancelResponseDto.builder()
+                .bookingId(booking.getId())
+                .status(booking.getStatus())
+                .canceledAt(booking.getCanceledAt())
+                .build();
+    }
+
 }

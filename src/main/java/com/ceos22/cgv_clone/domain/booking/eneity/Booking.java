@@ -78,4 +78,8 @@ public class Booking {
                 adultCount, teenCount, people, totalPrice);
     }
 
+    public void cancel() {
+        this.status = BookingStatus.CANCELED;
+        this.canceledAt = LocalDateTime.now();
+    }
 }
