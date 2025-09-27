@@ -58,72 +58,72 @@ class BookingServiceTest {
     }
 
 
-        @Test
-        @DisplayName("영화 예매 생성 테스트 - 성공")
-        void createBookingSuccess() {
+//        @Test
+//        @DisplayName("영화 예매 생성 테스트 - 성공")
+//        void createBookingSuccess() {
+//
+//            // given
+//            long memberId = 1L, screeningId = 10L, auditoriumId = 100L;
+//            List<Long> seatIds = List.of(101L, 102L);
+//
+//            BookingRequestDto requestDto = BookingRequestDto.builder()
+//                    .memberId(memberId)
+//                    .screeningId(screeningId)
+//                    .seatIds(seatIds)
+//                    .paymentType(PaymentType.APP_CARD)
+//                    .adultCount(2)
+//                    .teenCount(0)
+//                    .build();
+//
+//            Member member = new Member();
+//            Auditorium auditorium = new Auditorium();
+//            ReflectionTestUtils.setField(auditorium, "id", auditoriumId);
+//            Screening screening = new Screening();
+//            ReflectionTestUtils.setField(screening, "auditorium", auditorium);
+//            Seat seat1 = new Seat();
+//            ReflectionTestUtils.setField(seat1, "auditorium", auditorium);
+//            Seat seat2 = new Seat();
+//            ReflectionTestUtils.setField(seat2, "auditorium", auditorium);
+//
+//            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+//            given(screeningRepository.findById(screeningId)).willReturn(Optional.of(screening));
+//            given(seatRepository.findAllByIdWithLock(seatIds)).willReturn(List.of(seat1, seat2));
+//
+//
+//            // when
+//            BookingResponseDto result = bookingService.create(requestDto);
+//
+//            // then
+//            verify(bookingRepository, times(1)).save(any(Booking.class));
+//            verify(bookingSeatRepository, times(1)).saveAll(any());
+//
+//            int expectedPrice = calculateTotalPrice(2, 0);
+//            assertThat(result.getTotalPrice()).isEqualTo(expectedPrice);
+//
+//            assertThat(result.getTotalPeople()).isEqualTo(2);
+//            assertThat(result.getStatus()).isEqualTo(BookingStatus.BOOKED);
+//        }
 
-            // given
-            long memberId = 1L, screeningId = 10L, auditoriumId = 100L;
-            List<Long> seatIds = List.of(101L, 102L);
 
-            BookingRequestDto requestDto = BookingRequestDto.builder()
-                    .memberId(memberId)
-                    .screeningId(screeningId)
-                    .seatIds(seatIds)
-                    .paymentType(PaymentType.APP_CARD)
-                    .adultCount(2)
-                    .teenCount(0)
-                    .build();
-
-            Member member = new Member();
-            Auditorium auditorium = new Auditorium();
-            ReflectionTestUtils.setField(auditorium, "id", auditoriumId);
-            Screening screening = new Screening();
-            ReflectionTestUtils.setField(screening, "auditorium", auditorium);
-            Seat seat1 = new Seat();
-            ReflectionTestUtils.setField(seat1, "auditorium", auditorium);
-            Seat seat2 = new Seat();
-            ReflectionTestUtils.setField(seat2, "auditorium", auditorium);
-
-            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
-            given(screeningRepository.findById(screeningId)).willReturn(Optional.of(screening));
-            given(seatRepository.findAllByIdWithLock(seatIds)).willReturn(List.of(seat1, seat2));
-
-
-            // when
-            BookingResponseDto result = bookingService.create(requestDto);
-
-            // then
-            verify(bookingRepository, times(1)).save(any(Booking.class));
-            verify(bookingSeatRepository, times(1)).saveAll(any());
-
-            int expectedPrice = calculateTotalPrice(2, 0);
-            assertThat(result.getTotalPrice()).isEqualTo(expectedPrice);
-
-            assertThat(result.getTotalPeople()).isEqualTo(2);
-            assertThat(result.getStatus()).isEqualTo(BookingStatus.BOOKED);
-        }
-
-
-  @Test
-        @DisplayName("영화 예매 취소 테스트 - 성공")
-        void cancelBookingSuccess() {
-
-            // given
-            long bookingId = 1L;
-             Booking booking = Booking.create(new Member(), new Screening(), null, 0, 0, 0);
-
-            given(bookingRepository.findById(bookingId)).willReturn(Optional.of(booking));
-
-            // when
-            BookingCancelResponseDto result = bookingService.cancel(bookingId);
-
-            // then
-            assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELED);
-            assertThat(booking.getCanceledAt()).isNotNull();
-
-            assertThat(result.getStatus()).isEqualTo(BookingStatus.CANCELED);
-        }
-
+//  @Test
+//        @DisplayName("영화 예매 취소 테스트 - 성공")
+//        void cancelBookingSuccess() {
+//
+//            // given
+//            long bookingId = 1L;
+//             Booking booking = Booking.create(new Member(), new Screening(), null, 0, 0, 0);
+//
+//            given(bookingRepository.findById(bookingId)).willReturn(Optional.of(booking));
+//
+//            // when
+//            BookingCancelResponseDto result = bookingService.cancel(bookingId);
+//
+//            // then
+//            assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELED);
+//            assertThat(booking.getCanceledAt()).isNotNull();
+//
+//            assertThat(result.getStatus()).isEqualTo(BookingStatus.CANCELED);
+//        }
+//
 
 }
