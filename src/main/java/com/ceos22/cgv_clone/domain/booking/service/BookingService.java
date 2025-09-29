@@ -1,6 +1,5 @@
 package com.ceos22.cgv_clone.domain.booking.service;
 
-import com.ceos22.cgv_clone.domain.booking.dto.request.BookingCancelRequestDto;
 import com.ceos22.cgv_clone.domain.booking.dto.request.BookingRequestDto;
 import com.ceos22.cgv_clone.domain.booking.dto.response.BookingCancelResponseDto;
 import com.ceos22.cgv_clone.domain.booking.dto.response.BookingDetailResponseDto;
@@ -38,14 +37,6 @@ public class BookingService {
     private final MemberRepository memberRepository;
     private final ScreeningRepository screeningRepository;
     private final SeatRepository seatRepository;
-
-    /** 가격 계산 */
-    private int calculateTotalPrice(int adultCount, int teenCount) {
-        int adultPrice = adultCount * ADULT_PRICE.getPrice();
-        int teenPrice = teenCount * TEEN_PRICE.getPrice();
-
-        return adultPrice + teenPrice;
-    }
 
     /** 예매 생성 */
     @Transactional
@@ -165,5 +156,13 @@ public class BookingService {
                         .map(ls -> ls.getSeat().getRowNo() + "-" + ls.getSeat().getColumnNo())
                         .toList())
                 .build();
+    }
+
+    /** 가격 계산 */
+    private int calculateTotalPrice(int adultCount, int teenCount) {
+        int adultPrice = adultCount * ADULT_PRICE.getPrice();
+        int teenPrice = teenCount * TEEN_PRICE.getPrice();
+
+        return adultPrice + teenPrice;
     }
 }
