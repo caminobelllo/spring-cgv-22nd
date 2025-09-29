@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ProductOrderQueryService {
 
     private final ProductOrderRepository productOrderRepository;
@@ -111,6 +110,7 @@ public class ProductOrderQueryService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public List<ProductOrderSummaryDto> getOrdersByMember(Long memberId) {
         return productOrderRepository.findByMemberIdOrderByIdDesc(memberId)
                 .stream()
@@ -123,6 +123,7 @@ public class ProductOrderQueryService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public ProductOrderDetailDto getOrder(Long orderId) {
         ProductOrder order = productOrderRepository.findDetailsById(orderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ORDER_NOT_FOUND));

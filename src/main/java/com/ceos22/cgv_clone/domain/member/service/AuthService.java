@@ -19,13 +19,13 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AuthService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
+    @Transactional
     public Member signup(SignUpRequestDto requestDto) {
 
         // 이메일 중복 확인
@@ -45,6 +45,7 @@ public class AuthService {
         return memberRepository.save(member);
     }
 
+    @Transactional
     public TokenDto login(String email, String password) {
 
         Member member = memberRepository.findByEmail(email)

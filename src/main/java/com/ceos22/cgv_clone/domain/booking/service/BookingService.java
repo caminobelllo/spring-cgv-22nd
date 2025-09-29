@@ -31,7 +31,6 @@ import static com.ceos22.cgv_clone.domain.common.enums.TicketPrice.TEEN_PRICE;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class BookingService {
 
     private final BookingRepository bookingRepository;
@@ -140,6 +139,7 @@ public class BookingService {
     }
 
     /** 예매 상세 조회 */
+    @Transactional(readOnly = true)
     public BookingDetailResponseDto getDetail(Long bookingId) {
         Booking b = bookingRepository.findDetailById(bookingId)
                 .orElseThrow(() -> new CustomException(ErrorCode.BOOKING_NOT_FOUND));
