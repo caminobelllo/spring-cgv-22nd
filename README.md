@@ -86,3 +86,33 @@ JWT는 Header.Payload.Signature 구조로 이루어져 있다. 각 요소는
 기능들을 수행한다. JWT의 특징은 내부 정보를 단순 BASE64 방식으로 인코딩하기 때문에 외부에서 쉽게 디코딩 할 수 있다.  외부에서 열람해도 되는 정보를 담아야하며, 토큰 자체의 발급을 확인하기 위해서 사용한다.
 
 https://www.jwt.io/
+
+<hr />
+
+# SecurityContextHolder
+
+인증 정보 공유 방식
+
+[Servlet Authentication Architecture :: Spring Security](https://docs.spring.io/spring-security/reference/servlet/authentication/architecture.html)
+
+## **SecurityFilterChain 필터별 작업 상태 저장**
+
+- **상태 저장 필요**
+
+![](https://cafeptthumb-phinf.pstatic.net/MjAyNTA3MjhfMTg3/MDAxNzUzNjcyMzMyNzAz.jBTm0QdTjm31htsuT0WKAfF29hzhqwbUSe5_VZVhUYwg.HEiySfykNy_5nH1vLfS7oWKK8YS8OhT5ZzjL30VcAJgg.PNG/image-84459b21-ebd5-4b4a-a2ec-2919e4bb1d8c.png?type=w1600)
+
+- SecurityFilterChain 내부에 존재하는 각각의 필터가 시큐리티 관련 작업을 진행한다. 모든 작업은 기능 단위로 분업하여 진행함으로 앞에서 한 작업을 뒤 필터가 알기 위한 저장소 개념이 필요하다.
+- 예를 들어, 인가 필터가 작업을 하려면 유저의 ROLE 정보가 필요한데, 앞단의 필터에서 유저에게 ROLE값을 부여한 결과를 인가 필터까지 공유해야 확인할 수 있다.
+
+- **저장 : Authentication 객체**
+    
+    ![image.png](attachment:2f5925bc-744b-47c5-a91c-dee071438cce:image.png)
+    
+    - 해당하는 정보는 Authentication이라는 객체에 담긴다. (이 객체에 아이디, 로그인 여부, ROLE 데이터가 담긴다.)
+    
+    - Authentication 객체는 SecurityContext에 포함되어 관리되며 SecurityContext는 0개 이상 존재할 수 있다. 그리고 이 N개의 SecurityContext는 하나의 SecurityContextHolder에 의해서 관리된다.
+    
+    - **Authentication 객체**
+        - Principal : 유저에 대한 정보
+        - Credentials : 증명 (비밀번호, 토큰)
+        - Authorities : 유저의 권한(ROLE) 목록
