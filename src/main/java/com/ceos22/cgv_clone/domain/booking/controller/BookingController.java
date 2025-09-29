@@ -22,8 +22,8 @@ public class BookingController {
 
     @Operation(summary = "예매 생성")
     @PostMapping("/booking")
-    public CustomResponse<BookingResponseDto> create(@RequestBody BookingRequestDto req) {
-        return CustomResponse.onSuccess(SuccessCode.CREATED, bookingService.create(req));
+    public CustomResponse<BookingResponseDto> create(@RequestBody BookingRequestDto request) {
+        return CustomResponse.onSuccess(SuccessCode.CREATED, bookingService.create(request));
     }
 
     @Operation(summary = "예매 내역 조회")

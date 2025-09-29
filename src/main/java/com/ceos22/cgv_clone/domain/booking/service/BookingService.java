@@ -40,28 +40,28 @@ public class BookingService {
 
     /** 예매 생성 */
     @Transactional
-    public BookingResponseDto create(BookingRequestDto req) {
+    public BookingResponseDto create(BookingRequestDto request) {
 
-        Member member = memberRepository.findById(req.getMemberId())
+        Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        Screening screening = screeningRepository.findById(req.getScreeningId())
+        Screening screening = screeningRepository.findById(request.getScreeningId())
                 .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
 
         // 입력 검증
-        if (req.getSeatIds() == null || req.getSeatIds().isEmpty())
+        if (request.getSeatIds() == null || request.getSeatIds().isEmpty())
             throw new IllegalArgumentException("seatIds required");
 
-        int expectedPeople = req.getAdultCount() + req.getTeenCount();
-        if (expectedPeople != req.getSeatIds().size())
+        int expectedPeople = request.getAdultCount() + request.getTeenCount();
+        if (expectedPeople != request.getSeatIds().size())
             throw new CustomException(ErrorCode.BOOKING_COUNT_VALIDATION_FAILED);
 
-        if (req.getPaymentType() == null)
+        if (request.getPaymentType() == null)
             throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
 
         // 좌석 로딩 + 회차-관 일치 검증
         // findAllByIdWithLock 적용
-        List<Seat> seats = seatRepository.findAllByIdWithLock(req.getSeatIds());
-        if (seats.size() != req.getSeatIds().size())
+        List<Seat> seats = seatRepository.findAllByIdWithLock(request.getSeatIds());
+        if (seats.size() != request.getSeatIds().size())
             throw new CustomException(ErrorCode.SEAT_NOT_FOUND);
 
         Long screeningAuditoriumId = screening.getAuditorium().getId();
@@ -70,11 +70,11 @@ public class BookingService {
         if (mismatch) throw new CustomException(ErrorCode.SEAT_IN_AUDITORIUM_NOT_FOUND);
 
         // 가격 계산
-        int totalPrice = calculateTotalPrice(req.getAdultCount(), req.getTeenCount());
+        int totalPrice = calculateTotalPrice(request.getAdultCount(), request.getTeenCount());
 
         // Booking 저장
-        Booking booking = Booking.create(member, screening, req.getPaymentType(),
-                req.getAdultCount(), req.getTeenCount(), totalPrice);
+        Booking booking = Booking.create(member, screening, request.getPaymentType(),
+                request.getAdultCount(), request.getTeenCount(), totalPrice);
         bookingRepository.save(booking);
 
         // BookingSeat 저장

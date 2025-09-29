@@ -24,15 +24,15 @@ public class AuthController {
 
     @Operation(summary = "회원가입")
     @PostMapping("/signup")
-    public CustomResponse<?> signup(@RequestBody SignUpRequestDto requestDto) {
-        memberService.signup(requestDto);
+    public CustomResponse<?> signup(@RequestBody SignUpRequestDto request) {
+        memberService.signup(request);
         return CustomResponse.onSuccess(SuccessCode.MEMBER_CREATED);
     }
 
     @Operation(summary = "로그인")
     @PostMapping("/login")
-    public CustomResponse<TokenDto> login(@RequestBody LoginRequestDto requestDto) {
-        TokenDto tokenDto = memberService.login(requestDto.getEmail(), requestDto.getPassword());
+    public CustomResponse<TokenDto> login(@RequestBody LoginRequestDto request) {
+        TokenDto tokenDto = memberService.login(request.getEmail(), request.getPassword());
         return CustomResponse.onSuccess(SuccessCode.LOGIN_SUCCESS, tokenDto);
     }
 }

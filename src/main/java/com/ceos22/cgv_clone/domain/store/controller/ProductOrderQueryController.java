@@ -24,8 +24,8 @@ public class ProductOrderQueryController {
 
     @Operation(summary = "주문 생성")
     @PostMapping("/stores/orders")
-    public CustomResponse<ProductOrderResponseDto> create(@RequestBody ProductOrderRequestDto req) {
-        return CustomResponse.onSuccess(SuccessCode.CREATED, productOrderService.createOrder(req));
+    public CustomResponse<ProductOrderResponseDto> create(@RequestBody ProductOrderRequestDto request) {
+        return CustomResponse.onSuccess(SuccessCode.CREATED, productOrderService.createOrder(request));
     }
 
     @Operation(summary = "주문 목록 조회", description = "회원의 주문 목록을 조회하는 API")

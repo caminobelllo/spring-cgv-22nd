@@ -17,6 +17,9 @@ public enum ErrorCode implements BaseErrorCode{
 
     // 회원
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404", "회원을 찾을 수 없습니다"),
+    EMAIL_DUPLICATED(HttpStatus.CONFLICT, "MEMBER409", "이미 사용 중인 이메일입니다"),
+    EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_1", "가입되지 않은 이메일입니다"),
+    PASSWORD_WRONG(HttpStatus.BAD_REQUEST, "MEMBER400", "비밀번호가 일치하지 않습니다"),
 
     // 영화
     MOVIE_NOT_FOUND(HttpStatus.NOT_FOUND, "MOVIE404", "영화를 찾을 수 없습니다"),

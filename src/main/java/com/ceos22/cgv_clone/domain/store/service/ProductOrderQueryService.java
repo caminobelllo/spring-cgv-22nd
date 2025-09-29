@@ -39,19 +39,19 @@ public class ProductOrderQueryService {
 
     /** 주문 생성 + 응답 반환 */
     @Transactional
-    public ProductOrderResponseDto createOrder(ProductOrderRequestDto req) {
+    public ProductOrderResponseDto createOrder(ProductOrderRequestDto request) {
 
-        Member member = memberRepository.findById(req.getMemberId())
+        Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        Cinema cinema = cinemaRepository.findById(req.getCinemaId())
+        Cinema cinema = cinemaRepository.findById(request.getCinemaId())
                 .orElseThrow(() -> new CustomException(ErrorCode.CINEMA_NOT_FOUND));
 
-        if (req.getItems() == null || req.getItems().isEmpty()) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new CustomException(ErrorCode.ITEM_VALIDATION_FAILED);
         }
 
         // 쿼리 한 번에 조회되도록
-        List<Long> productIds = req.getItems().stream()
+        List<Long> productIds = request.getItems().stream()
                 .map(ProductOrderRequestDto.OrderItem::getProductId)
                 .toList();
 
@@ -67,7 +67,7 @@ public class ProductOrderQueryService {
         int totalPrice = 0;
         List<ProductOrderResponseDto.OrderItem> responseItems = new ArrayList<>();
 
-        for (ProductOrderRequestDto.OrderItem item : req.getItems()) {
+        for (ProductOrderRequestDto.OrderItem item : request.getItems()) {
             Product product = productMap.get(item.getProductId());
             totalPrice += product.getPrice() * item.getQuantity();
 
@@ -85,7 +85,7 @@ public class ProductOrderQueryService {
 
         // 재고 차감 + 주문 라인 생성/저장
         List<ProductOrderItem> lines = new ArrayList<>();
-        for (ProductOrderRequestDto.OrderItem item : req.getItems()) {
+        for (ProductOrderRequestDto.OrderItem item : request.getItems()) {
             Product product = productMap.get(item.getProductId());
 
             // 재고 차감
