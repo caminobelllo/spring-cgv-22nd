@@ -1,4 +1,4 @@
-package com.ceos22.cgv_clone.domain.booking.eneity;
+package com.ceos22.cgv_clone.domain.booking.entity;
 
 import com.ceos22.cgv_clone.domain.common.enums.BookingStatus;
 import com.ceos22.cgv_clone.domain.common.enums.PaymentType;
@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
