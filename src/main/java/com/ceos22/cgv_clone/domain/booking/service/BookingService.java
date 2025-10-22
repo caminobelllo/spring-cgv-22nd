@@ -42,11 +42,6 @@ public class BookingService {
     @Transactional
     public BookingResponseDto create(BookingRequestDto request) {
 
-        Member member = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        Screening screening = screeningRepository.findById(request.getScreeningId())
-                .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
-
         // 입력 검증
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty())
             throw new IllegalArgumentException("seatIds required");
@@ -57,6 +52,12 @@ public class BookingService {
 
         if (request.getPaymentType() == null)
             throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
+
+        Member member = memberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        Screening screening = screeningRepository.findById(request.getScreeningId())
+                .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
+
 
         // 좌석 로딩 + 회차-관 일치 검증
         // findAllByIdWithLock 적용
