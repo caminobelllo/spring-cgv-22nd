@@ -17,6 +17,9 @@ import com.ceos22.cgv_clone.domain.theater.repository.SeatRepository;
 import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
 import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +27,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import static com.ceos22.cgv_clone.domain.common.enums.TicketPrice.ADULT_PRICE;
 import static com.ceos22.cgv_clone.domain.common.enums.TicketPrice.TEEN_PRICE;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingService {
@@ -37,67 +42,104 @@ public class BookingService {
     private final MemberRepository memberRepository;
     private final ScreeningRepository screeningRepository;
     private final SeatRepository seatRepository;
+    private final RedissonClient redissonClient;
+
+    // 락 획득 시도
+    private static final long LOCK_WAIT_TIME = 1L;
+    // 락 소유 (임시)
+    private static final long LEASE_TIME = 3L;
 
     /** 예매 생성 */
     @Transactional
     public BookingResponseDto create(String email, BookingRequestDto request) {
 
-        // 입력 검증
-        if (request.getSeatIds() == null || request.getSeatIds().isEmpty())
-            throw new IllegalArgumentException("seatIds required");
-
-        int expectedPeople = request.getAdultCount() + request.getTeenCount();
-        if (expectedPeople != request.getSeatIds().size())
-            throw new CustomException(ErrorCode.BOOKING_COUNT_VALIDATION_FAILED);
-
-        if (request.getPaymentType() == null)
-            throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
-
-        Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        Screening screening = screeningRepository.findById(request.getScreeningId())
-                .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
-
-
-        // 좌석 로딩 + 회차-관 일치 검증
-        // findAllByIdWithLock 적용
-        List<Seat> seats = seatRepository.findAllByIdWithLock(request.getSeatIds());
-        if (seats.size() != request.getSeatIds().size())
-            throw new CustomException(ErrorCode.SEAT_NOT_FOUND);
-
-        Long screeningAuditoriumId = screening.getAuditorium().getId();
-        boolean mismatch = seats.stream().anyMatch(s -> !Objects.equals(
-                s.getAuditorium().getId(), screeningAuditoriumId));
-        if (mismatch) throw new CustomException(ErrorCode.SEAT_IN_AUDITORIUM_NOT_FOUND);
-
-        // 가격 계산
-        int totalPrice = calculateTotalPrice(request.getAdultCount(), request.getTeenCount());
-
-        // Booking 저장
-        Booking booking = Booking.create(member, screening, request.getPaymentType(),
-                request.getAdultCount(), request.getTeenCount(), totalPrice);
-        bookingRepository.save(booking);
-
-        // BookingSeat 저장
-        List<BookingSeat> lines = new ArrayList<>();
-
-        for (Seat seat : seats) {
-            lines.add(BookingSeat.of(booking, screening, seat));
-        }
-
-        // try-catch로 다시 검증
-        try {
-            bookingSeatRepository.saveAll(lines);
-        } catch (DataIntegrityViolationException e) {
-            throw new CustomException(ErrorCode.SEAT_ALREADY_BOOKED);
-        }
-
-        // 응답
-        List<String> seatLabels = seats.stream()
-                .map(s -> s.getRowNo() + "-" + s.getColumnNo())
+         // 락 키: 상영회차 id + 좌석 id
+        List<RLock> locks = request.getSeatIds().stream()
+                .sorted()
+                .map(seatId ->
+                        redissonClient.getLock("lock:seat:" + request.getScreeningId() + ":" + seatId)
+                )
                 .toList();
 
-        return BookingResponseDto.of(booking, seatLabels);
+        RLock multiLock = redissonClient.getMultiLock(locks.toArray(new RLock[0]));
+
+        try {
+
+            boolean isLocked = multiLock.tryLock(LOCK_WAIT_TIME, LEASE_TIME, TimeUnit.SECONDS);
+
+
+            if (!isLocked) {
+                log.warn("락 획득 실패. (다른 사용자 선점 시도) screeningId={}, seatIds={}",
+                        request.getScreeningId(), request.getSeatIds());
+                throw new CustomException(ErrorCode.SEAT_ALREADY_BOOKED);
+            }
+
+            log.info("락 획득 성공. user={}, screeningId={}, seatIds={}",
+                    email, request.getScreeningId(), request.getSeatIds());
+
+
+            if (request.getSeatIds() == null || request.getSeatIds().isEmpty())
+                throw new CustomException(ErrorCode.VALIDATION_FAILED);
+
+            int expectedPeople = request.getAdultCount() + request.getTeenCount();
+            if (expectedPeople != request.getSeatIds().size())
+                throw new CustomException(ErrorCode.BOOKING_COUNT_VALIDATION_FAILED);
+
+            if (request.getPaymentType() == null)
+                throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
+
+            Member member = memberRepository.findByEmail(email)
+                    .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+            Screening screening = screeningRepository.findById(request.getScreeningId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
+
+
+            List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
+            if (seats.size() != request.getSeatIds().size())
+                throw new CustomException(ErrorCode.SEAT_NOT_FOUND);
+
+            Long screeningAuditoriumId = screening.getAuditorium().getId();
+            boolean mismatch = seats.stream().anyMatch(s -> !Objects.equals(
+                    s.getAuditorium().getId(), screeningAuditoriumId));
+            if (mismatch) throw new CustomException(ErrorCode.SEAT_IN_AUDITORIUM_NOT_FOUND);
+
+            int totalPrice = calculateTotalPrice(request.getAdultCount(), request.getTeenCount());
+
+            Booking booking = Booking.create(member, screening, request.getPaymentType(),
+                    request.getAdultCount(), request.getTeenCount(), totalPrice);
+            bookingRepository.save(booking);
+
+            List<BookingSeat> lines = new ArrayList<>();
+            for (Seat seat : seats) {
+                lines.add(BookingSeat.of(booking, screening, seat));
+            }
+
+            try {
+                bookingSeatRepository.saveAll(lines);
+            } catch (DataIntegrityViolationException e) {
+
+                log.error("UNIQUE 제약조건 위반 (중복 예매 시도)", e);
+                throw new CustomException(ErrorCode.SEAT_ALREADY_BOOKED);
+            }
+
+            List<String> seatLabels = seats.stream()
+                    .map(s -> s.getRowNo() + "-" + s.getColumnNo())
+                    .toList();
+
+            return BookingResponseDto.of(booking, seatLabels);
+
+        } catch (InterruptedException e) {
+            log.error("Redisson 락 대기 중 인터럽트 발생", e);
+            Thread.currentThread().interrupt(); // 스레드 인터럽트 상태 복원
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR_500);
+        } finally {
+
+            if (multiLock.isLocked() && multiLock.isHeldByCurrentThread()) {
+                multiLock.unlock();
+                log.info("락 해제. screeningId={}, seatIds={}",
+                        request.getScreeningId(), request.getSeatIds());
+            }
+        }
     }
 
     /** 예매 취소 */
