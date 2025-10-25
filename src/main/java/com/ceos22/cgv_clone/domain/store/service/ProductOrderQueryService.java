@@ -18,6 +18,7 @@ import com.ceos22.cgv_clone.domain.theater.repository.CinemaRepository;
 import com.ceos22.cgv_clone.global.apiPayload.code.error.ErrorCode;
 import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductOrderQueryService {
@@ -40,6 +42,8 @@ public class ProductOrderQueryService {
     /** 주문 생성 + 응답 반환 */
     @Transactional
     public ProductOrderResponseDto createOrder(String email, ProductOrderRequestDto request) {
+
+        log.debug("주문 생성 시도: {}, cinemaId: {}", email, request.getCinemaId());
 
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -92,6 +96,9 @@ public class ProductOrderQueryService {
             int updatedRows = inventoryRepository.decrement(cinema.getId(), product.getId(), item.getQuantity());
             if (updatedRows != 1) {
 
+                log.warn("재고 차감 실패. cinemaId: {}, productId: {}, requestedQty: {}",
+                        cinema.getId(), product.getId(), item.getQuantity());
+
                 throw new CustomException(ErrorCode.PRODUCT_STOCK_VALIDATION_FAILED);
             }
 
@@ -99,6 +106,8 @@ public class ProductOrderQueryService {
         }
         productOrderItemRepository.saveAll(lines);
 
+        log.info("Order 생성. user: {}, orderId: {}, cinemaId: {}",
+                email, order.getId(), cinema.getId());
 
         // 응답 DTO
         return ProductOrderResponseDto.builder()

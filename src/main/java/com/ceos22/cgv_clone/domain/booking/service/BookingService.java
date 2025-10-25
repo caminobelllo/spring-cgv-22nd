@@ -63,6 +63,9 @@ public class BookingService {
 
         RLock multiLock = redissonClient.getMultiLock(locks.toArray(new RLock[0]));
 
+        log.debug("사용자 락 획득 시도: {}, screeningId: {}, seats: {}",
+                email, request.getScreeningId(), request.getSeatIds());
+
         try {
 
             boolean isLocked = multiLock.tryLock(LOCK_WAIT_TIME, LEASE_TIME, TimeUnit.SECONDS);
@@ -126,6 +129,9 @@ public class BookingService {
                     .map(s -> s.getRowNo() + "-" + s.getColumnNo())
                     .toList();
 
+            log.info("Booking 생성. user: {}, bookingId: {}, screeningId: {}",
+                    email, booking.getId(), screening.getId());
+
             return BookingResponseDto.of(booking, seatLabels);
 
         } catch (InterruptedException e) {
@@ -145,6 +151,9 @@ public class BookingService {
     /** 예매 취소 */
     @Transactional
     public BookingCancelResponseDto cancel(Long bookingId) {
+
+        log.debug("예매 취소 bookingId: {}", bookingId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new CustomException(ErrorCode.BOOKING_NOT_FOUND));
 
@@ -153,6 +162,9 @@ public class BookingService {
 
         // 상태 변경
         booking.cancel();
+
+        log.info("Booking 취소. bookingId: {}, user: {}",
+                booking.getId(), booking.getMember().getEmail());
 
         return BookingCancelResponseDto.builder()
                 .bookingId(booking.getId())

@@ -8,6 +8,7 @@ import com.ceos22.cgv_clone.global.apiPayload.exception.CustomException;
 import com.ceos22.cgv_clone.global.security.JwtTokenProvider;
 import com.ceos22.cgv_clone.global.security.dto.TokenDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -30,8 +32,11 @@ public class AuthService {
     @Transactional
     public Member signup(SignUpRequestDto request) {
 
+        log.debug("Signup 시도: {}", request.getEmail());
+
         // 이메일 중복 확인
         if (memberRepository.existsByEmail(request.getEmail())) {
+            log.warn("Signup 실패: 이메일 중복. email: {}", request.getEmail());
             throw new CustomException(ErrorCode.EMAIL_DUPLICATED);
         }
 
@@ -44,17 +49,25 @@ public class AuthService {
                 request.getNickname()
         );
 
+        log.info("Member 생성. email: {}, memberId: {}", member.getEmail(), member.getId());
+
         return memberRepository.save(member);
     }
 
     @Transactional
     public TokenDto login(String email, String password) {
 
+        log.debug("Login 시도: {}", email);
+
         Member member = memberRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.EMAIL_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("Login 실패: 이메일 없음. email: {}", email);
+                    return new CustomException(ErrorCode.EMAIL_NOT_FOUND);
+                });
 
         // 비밀번호 확인
         if (!passwordEncoder.matches(password, member.getPassword())) {
+            log.warn("Login 실패: 비밀번호 불일치. email: {}", email);
             throw new CustomException(ErrorCode.PASSWORD_WRONG);
         }
 
@@ -67,6 +80,8 @@ public class AuthService {
 
         // 액세스 토큰 생성
         String accessToken = jwtTokenProvider.createToken(authentication);
+
+        log.info("Login 성공. email: {}, memberId: {}", member.getEmail(), member.getId());
 
         return TokenDto.builder()
                 .grantType("Bearer")
