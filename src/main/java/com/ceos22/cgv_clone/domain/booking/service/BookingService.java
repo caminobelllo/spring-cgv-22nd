@@ -40,7 +40,7 @@ public class BookingService {
 
     /** 예매 생성 */
     @Transactional
-    public BookingResponseDto create(BookingRequestDto request) {
+    public BookingResponseDto create(String email, BookingRequestDto request) {
 
         // 입력 검증
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty())
@@ -53,7 +53,7 @@ public class BookingService {
         if (request.getPaymentType() == null)
             throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
 
-        Member member = memberRepository.findById(request.getMemberId())
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Screening screening = screeningRepository.findById(request.getScreeningId())
                 .orElseThrow(() -> new CustomException(ErrorCode.SCREENING_NOT_FOUND));
@@ -89,7 +89,7 @@ public class BookingService {
         try {
             bookingSeatRepository.saveAll(lines);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("좌석을 예매할 수 없습니다.", e);
+            throw new CustomException(ErrorCode.SEAT_ALREADY_BOOKED);
         }
 
         // 응답
@@ -97,18 +97,7 @@ public class BookingService {
                 .map(s -> s.getRowNo() + "-" + s.getColumnNo())
                 .toList();
 
-        return BookingResponseDto.builder()
-                .bookingId(booking.getId())
-                .screeningId(screening.getId())
-                .adultCount(booking.getAdultCount())
-                .teenCount(booking.getTeenCount())
-                .totalPeople(booking.getTotalPeople())
-                .totalPrice(booking.getTotalPrice())
-                .paymentType(booking.getPaymentType())
-                .status(booking.getStatus())
-                .bookingAt(booking.getBookingAt())
-                .seats(seatLabels)
-                .build();
+        return BookingResponseDto.of(booking, seatLabels);
     }
 
     /** 예매 취소 */
@@ -138,25 +127,11 @@ public class BookingService {
 
         List<BookingSeat> lines = bookingSeatRepository.findByBookingWithSeat(b);
 
-        return BookingDetailResponseDto.builder()
-                .bookingId(b.getId())
-                .memberId(b.getMember().getId())
-                .paymentType(b.getPaymentType())
-                .status(b.getStatus())
-                .bookingAt(b.getBookingAt())
-                .adultCount(b.getAdultCount())
-                .teenCount(b.getTeenCount())
-                .totalPeople(b.getTotalPeople())
-                .totalPrice(b.getTotalPrice())
-                .screeningId(b.getScreening().getId())
-                .movieTitle(b.getScreening().getMovie().getTitle())
-                .auditoriumName(b.getScreening().getAuditorium().getName())
-                .startedAt(b.getScreening().getStartedAt())
-                .endedAt(b.getScreening().getEndedAt())
-                .seats(lines.stream()
-                        .map(ls -> ls.getSeat().getRowNo() + "-" + ls.getSeat().getColumnNo())
-                        .toList())
-                .build();
+        List<String> seatLabels = lines.stream()
+                .map(ls -> ls.getSeat().getRowNo() + "-" + ls.getSeat().getColumnNo())
+                .toList();
+
+        return BookingDetailResponseDto.of(b, seatLabels);
     }
 
     /** 가격 계산 */

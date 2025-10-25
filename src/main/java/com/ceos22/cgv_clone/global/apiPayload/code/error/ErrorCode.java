@@ -31,6 +31,7 @@ public enum ErrorCode implements BaseErrorCode{
     BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKING404", "예매를 찾을 수 없습니다"),
     BOOKING_COUNT_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "BOOKING400", "좌석 수와 사람 수가 일치하지 않습니다"),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKING404", "예매 방식을 선택해주세요"),
+    SEAT_ALREADY_BOOKED(HttpStatus.CONFLICT, "BOOKING409", "이미 예매된 좌석입니다."),
 
     // 좌석
     SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "SEAT404", "좌석을 찾을 수 없습니다."),

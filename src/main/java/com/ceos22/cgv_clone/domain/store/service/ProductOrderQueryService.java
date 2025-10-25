@@ -39,9 +39,9 @@ public class ProductOrderQueryService {
 
     /** 주문 생성 + 응답 반환 */
     @Transactional
-    public ProductOrderResponseDto createOrder(ProductOrderRequestDto request) {
+    public ProductOrderResponseDto createOrder(String email, ProductOrderRequestDto request) {
 
-        Member member = memberRepository.findById(request.getMemberId())
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Cinema cinema = cinemaRepository.findById(request.getCinemaId())
                 .orElseThrow(() -> new CustomException(ErrorCode.CINEMA_NOT_FOUND));
