@@ -10,6 +10,8 @@ import com.ceos22.cgv_clone.domain.booking.repository.BookingRepository;
 import com.ceos22.cgv_clone.domain.booking.repository.BookingSeatRepository;
 import com.ceos22.cgv_clone.domain.member.entity.Member;
 import com.ceos22.cgv_clone.domain.member.repository.MemberRepository;
+import com.ceos22.cgv_clone.domain.payment.dto.PaymentRequestDto;
+import com.ceos22.cgv_clone.domain.payment.service.PaymentService;
 import com.ceos22.cgv_clone.domain.screening.entity.Screening;
 import com.ceos22.cgv_clone.domain.screening.repository.ScreeningRepository;
 import com.ceos22.cgv_clone.domain.theater.entity.Seat;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.ceos22.cgv_clone.domain.common.enums.TicketPrice.ADULT_PRICE;
@@ -43,11 +47,15 @@ public class BookingService {
     private final ScreeningRepository screeningRepository;
     private final SeatRepository seatRepository;
     private final RedissonClient redissonClient;
+    private final PaymentService paymentService;
+
+    @Value("${payment.store-id}")
+    private String storeId;
 
     // 락 획득 시도
     private static final long LOCK_WAIT_TIME = 1L;
-    // 락 소유 (임시)
-    private static final long LEASE_TIME = 3L;
+    // 락 소유
+    private static final long LEASE_TIME = 30L;
 
     /** 예매 생성 */
     @Transactional
@@ -69,7 +77,6 @@ public class BookingService {
         try {
 
             boolean isLocked = multiLock.tryLock(LOCK_WAIT_TIME, LEASE_TIME, TimeUnit.SECONDS);
-
 
             if (!isLocked) {
                 log.warn("락 획득 실패. (다른 사용자 선점 시도) screeningId={}, seatIds={}",
@@ -108,7 +115,22 @@ public class BookingService {
 
             int totalPrice = calculateTotalPrice(request.getAdultCount(), request.getTeenCount());
 
-            Booking booking = Booking.create(member, screening, request.getPaymentType(),
+            // 예매 번호 생성
+            String bookingNum = UUID.randomUUID().toString();
+
+            PaymentRequestDto paymentRequest = PaymentRequestDto.builder()
+                    .storeId(storeId)
+                    .totalPayAmount(totalPrice)
+                    .currency("KRW")
+                    .build();
+
+
+            // 결제 API 호출
+            paymentService.approvePayment(bookingNum, paymentRequest);
+            log.info("Payment 성공. bookingNum(paymentId): {}", bookingNum);
+
+            // 결제 성공 시 DB 저장
+            Booking booking = Booking.create(member, screening, bookingNum, request.getPaymentType(), // ⬅️ bookingNum 전달
                     request.getAdultCount(), request.getTeenCount(), totalPrice);
             bookingRepository.save(booking);
 

@@ -44,7 +44,11 @@ public enum ErrorCode implements BaseErrorCode{
     ITEM_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "STORE400", "아이템 파라미터가 필요합니다."),
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE404", "상품을 찾을 수 없습니다."),
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE404", "주문을 찾을 수 없습니다."),
-    PRODUCT_STOCK_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "STORE400", "상품 재고가 부족합니다");
+    PRODUCT_STOCK_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "STORE400", "상품 재고가 부족합니다"),
+
+    // 결제
+    PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT500", "결제 처리 중 오류가 발생했습니다.");
+
 
 
     private final HttpStatus status;

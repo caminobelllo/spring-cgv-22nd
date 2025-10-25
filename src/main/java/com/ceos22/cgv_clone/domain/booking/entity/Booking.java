@@ -56,11 +56,12 @@ public class Booking {
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
-    private Booking(Member member, Screening screening, LocalDateTime bookingAt,
+    private Booking(Member member, Screening screening, String bookingNum, LocalDateTime bookingAt,
                     PaymentType paymentType, int adultCount, int teenCount,
                     int totalPeople, int totalPrice) {
         this.member = member;
         this.screening = screening;
+        this.bookingNum = bookingNum;
         this.bookingAt = bookingAt;
         this.paymentType = paymentType;
         this.status = BookingStatus.BOOKED;
@@ -70,10 +71,10 @@ public class Booking {
         this.totalPrice = totalPrice;
     }
 
-    public static Booking create(Member member, Screening screening, PaymentType paymentType,
+    public static Booking create(Member member, Screening screening, String bookingNum, PaymentType paymentType,
                                  int adultCount, int teenCount, int totalPrice) {
         int people = adultCount + teenCount;
-        return new Booking(member, screening, LocalDateTime.now(), paymentType,
+        return new Booking(member, screening, bookingNum, LocalDateTime.now(), paymentType,
                 adultCount, teenCount, people, totalPrice);
     }
 
