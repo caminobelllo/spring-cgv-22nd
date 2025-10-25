@@ -8,6 +8,7 @@ import lombok.Getter;
 public class PaymentRequestDto {
 
     private String storeId;
+    private String orderName;
     private Integer totalPayAmount;
     private String currency;
 }

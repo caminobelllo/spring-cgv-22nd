@@ -29,8 +29,8 @@ public class PaymentService {
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class).flatMap(errorBody -> {
-                            log.error("Payment API call failed. status: {}, body: {}", response.statusCode(), errorBody);
-                            // 10% 확률의 500 에러도 여기에 포함됨
+                            log.error("Payment API 호출 실패. status: {}, body: {}", response.statusCode(), errorBody);
+
                             return Mono.error(new CustomException(ErrorCode.PAYMENT_FAILED));
                         })
                 )

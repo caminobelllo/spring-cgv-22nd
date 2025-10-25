@@ -117,9 +117,11 @@ public class BookingService {
 
             // 예매 번호 생성
             String bookingNum = UUID.randomUUID().toString();
+            String orderName = screening.getMovie().getTitle() + " 외 " + (seats.size() - 1) + "건";
 
             PaymentRequestDto paymentRequest = PaymentRequestDto.builder()
                     .storeId(storeId)
+                    .orderName(orderName)
                     .totalPayAmount(totalPrice)
                     .currency("KRW")
                     .build();
@@ -162,10 +164,10 @@ public class BookingService {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR_500);
         } finally {
 
-            if (multiLock.isLocked() && multiLock.isHeldByCurrentThread()) {
+            if (multiLock.isHeldByCurrentThread()) {
                 multiLock.unlock();
-                log.info("락 해제. screeningId={}, seatIds={}",
-                        request.getScreeningId(), request.getSeatIds());
+                log.info("락 해제. user: {}, screeningId: {}, seats: {}",
+                        email, request.getScreeningId(), request.getSeatIds());
             }
         }
     }
