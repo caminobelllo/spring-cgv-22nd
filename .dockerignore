@@ -1,9 +1,11 @@
 .git
-.env
-build/
+.github
+**/.idea
+**/.vscode
+**/build
+**/.gradle
+
 !build/libs/*.jar
-.gradle/
-out/
 !gradle/
 !gradle/wrapper/
 !gradle/wrapper/gradle-wrapper.jar
