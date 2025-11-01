@@ -3,7 +3,7 @@ name: CGV clone CI
 on:
   push:
     branches:
-      - caminobelllo
+      - master
 
 jobs:
   build:
@@ -30,12 +30,10 @@ jobs:
       # Docker 이미지 빌드 및 푸시
       - name: Build & Push Docker image
         run: |
-          docker build --pull --no-cache -t $REGISTRY/$IMAGE:$TAG .
+          docker build -t $REGISTRY/$IMAGE:$TAG .
           docker push $REGISTRY/$IMAGE:$TAG
 
-      # latest tag (develop branch)
-      - name: Push :latest
-        if: github.ref == 'refs/heads/develop'   # push 이벤트에서 develop 일 때만
+      - name: Tag & Push :latest
         run: |
           docker tag $REGISTRY/$IMAGE:$TAG $REGISTRY/$IMAGE:latest
           docker push $REGISTRY/$IMAGE:latest
