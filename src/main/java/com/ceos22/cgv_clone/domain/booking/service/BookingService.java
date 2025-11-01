@@ -205,6 +205,8 @@ public class BookingService {
         // 상태 변경
         booking.cancel();
 
+        paymentService.canclePayment(booking.getBookingNum());
+
         log.info("Booking 취소. bookingId: {}, user: {}",
                 booking.getId(), booking.getMember().getEmail());
 
