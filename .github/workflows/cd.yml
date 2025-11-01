@@ -16,6 +16,9 @@ jobs:
       REGISTRY: ${{ secrets.DOCKERHUB_USERNAME }}
       IMAGE: ${{ secrets.DOCKERHUB_REPOSITORY }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
       APP_DIR: /home/ubuntu
 
     steps:
