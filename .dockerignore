@@ -1,12 +1,9 @@
-.git
-.github
-**/.idea
-**/.vscode
-**/build
-**/.gradle
+# IDE 설정 제거
+.idea
+*.iml
+*.ipr
+*.iws
 
-!build/libs/*.jar
-!gradle/
-!gradle/wrapper/
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
+# 기타 불필요 파일
+*.log
+.DS_Store
