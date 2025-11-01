@@ -15,11 +15,11 @@ jobs:
     env:
       REGISTRY: ${{ secrets.DOCKERHUB_USERNAME }}
       IMAGE: ${{ secrets.DOCKERHUB_REPOSITORY }}
+      TAG: ${{ github.event.workflow_run.head_sha }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      APP_DIR: /home/ubuntu
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-
-      APP_DIR: /home/ubuntu
 
     steps:
       - name: Deploy via SSH
@@ -29,28 +29,29 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          envs: REGISTRY,IMAGE,TAG,APP_DIR,DOCKERHUB_USERNAME,DOCKERHUB_ACCESS_TOKEN
+          envs: REGISTRY,IMAGE,TAG,HEAD_SHA,APP_DIR,DOCKERHUB_USERNAME,DOCKERHUB_ACCESS_TOKEN
+
           script: |
             set -euo pipefail
-            
             cd "$APP_DIR"
-            
+
             test -f docker-compose.prod.yml || { echo "docker-compose.prod.yml not found in $APP_DIR"; exit 1; }
             test -f .env || { echo ".env not found in $APP_DIR"; exit 1; }
-            
+
             echo "[1/4] Docker login"
-            echo "${DOCKERHUB_ACCESS_TOKEN}" | sudo docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-            
+            if [ -n "${DOCKERHUB_ACCESS_TOKEN:-}" ]; then
+              echo "${DOCKERHUB_ACCESS_TOKEN}" | sudo docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+            fi
+
             echo "[2/4] Export variables for compose interpolation"
-            export REGISTRY="${REGISTRY}"
-            export IMAGE="${IMAGE}"
-            export TAG="${TAG}"
-            
+            TAG="${TAG:-${HEAD_SHA:-latest}}"
+            export REGISTRY IMAGE TAG
+
             echo "[3/4] Pull & Up"
-            sudo docker compose pull app || true
-            sudo docker compose up -d
-            
+            sudo docker compose -f docker-compose.prod.yml pull app || true
+            sudo docker compose -f docker-compose.prod.yml up -d
+
             echo "[4/4] Cleanup"
             sudo docker image prune -f
-            
+
             echo "✅ Deployed ${REGISTRY}/${IMAGE}:${TAG}"
