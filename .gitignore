@@ -43,3 +43,6 @@ secrets.yml
 .idea
 *.yml
 *.properties
+
+*.pem
+.env
