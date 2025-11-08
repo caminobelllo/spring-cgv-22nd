@@ -293,3 +293,15 @@ Feign Client란 Netflix에서 개발한 Http Client다. (HttpClient는 Http 요�
     - 프로덕션 환경에서 사용할 기본 레벨
 4. DEBUG
     - 개발 및 테스트 환경에서만 사용
+
+<hr />
+
+# 아키텍처 다이어그램
+<img width="841" height="605" alt="ceos-22 drawio (1)" src="https://github.com/user-attachments/assets/fe58832f-55ca-4fd2-a7a7-8142749bc298" />
+
+# 부하 테스트
+- 테스트용 데이터 추가
+<img width="650" height="468" alt="스크린샷 2025-11-08 오후 10 05 47" src="https://github.com/user-attachments/assets/572c4271-5fa2-4212-85db-b5cfe91ae846" />
+
+- 모니터링 대시보드
+<img width="1436" height="966" alt="스크린샷 2025-11-08 오후 10 10 14" src="https://github.com/user-attachments/assets/6f2b7cc3-0346-4b00-88c0-608f267a4add" />
